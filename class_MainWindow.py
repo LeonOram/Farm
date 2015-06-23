@@ -1,11 +1,15 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+
 import sys
 import random
 
 #Layouts
 from class_RadioButton import *
 from manual import * # manual grow window
+
+#Graphics
+from crop_view_class import *
 
 #Crops
 from wheat_class import *
@@ -17,8 +21,9 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Fariming Simulator 1992")
+        self.setWindowTitle("Farming Simulator 1992")
         self.create_select_crop_layout()
+        
         #create stack
         self.stacked_layout = QStackedLayout()
         self.stacked_layout.addWidget(self.select_crop_widget)
@@ -42,20 +47,35 @@ class MainWindow(QMainWindow):
         self.instantiate_button.clicked.connect(self.instantiate_crop)
 
     def create_view_crop_layout(self,crop_type):
-
+        #create labels
         self.growth_label=QLabel("Growth")
         self.days_label=QLabel("Days Growing")
         self.status_label=QLabel("Crop Status")
 
+        #create textbox
         self.growth_line_edit = QLineEdit()
         self.days_line_edit = QLineEdit()
         self.status_line_edit = QLineEdit()
 
+        #create buttons for growing crop
         self.manual_grow_button =QPushButton("Manually Grow")
         self.auto_grow_button = QPushButton("Automaticlly Grow")
 
+        #create grid
         self.grow_grid = QGridLayout()
         self.status_grid = QGridLayout()
+
+        #instantiate crop images
+        if crop_type == 1:
+            self.crop_view = WheatView()
+        elif crop_type == 2:
+            self.crop_view = PotatoView()
+
+        #set propeties
+        self.crop_view.setHorizontalScrollBarPolicy(1)
+        self.crop_view.setVerticalScrollBarPolicy(1)
+        self.crop_view.setFixedHeight(182)
+        self.crop_view.setFixedWidth(242)
 
         #Create status sub grid
         self.status_grid.addWidget(self.growth_label,0,0)
@@ -67,6 +87,7 @@ class MainWindow(QMainWindow):
         self.status_grid.addWidget(self.status_line_edit,2,1)
 
         #Add widget to grow grid
+        self.grow_grid.addWidget(self.crop_view,0,0)
         self.grow_grid.addLayout(self.status_grid,0,1)
         self.grow_grid.addWidget(self.manual_grow_button,1,0)
         self.grow_grid.addWidget(self.auto_grow_button,1,1)
@@ -98,9 +119,11 @@ class MainWindow(QMainWindow):
         self.update_crop_view_status()
 
     def manual_grow_crop(self):
+        #popup box for input
         manual_values_dialog = ManualGrowDialog()
         manual_values_dialog.exec_()
         light,water=manual_values_dialog.values()
+        #grow and update
         self.simulated_crop.grow(light,water)
         self.update_crop_view_status()
 
@@ -112,11 +135,28 @@ class MainWindow(QMainWindow):
         self.days_line_edit.setText(str(crop_status_report["days growing"]))
         self.status_line_edit.setText(str(crop_status_report["status"]))
 
+        #update image
+        if crop_status_report["status"] == "Seed":
+            self.crop_view.switch_scene(0)
+        elif crop_status_report["status"] == "Seedling":
+            self.crop_view.switch_scene(1)
+        elif crop_status_report["status"] == "Young":
+            self.crop_view.switch_scene(2)
+        elif crop_status_report["status"] == "Mature":
+            self.crop_view.switch_scene(3)
+        elif crop_status_report["status"] == "Old":
+            self.crop_view.switch_scene(4)
+
+
+
+
+
 
         
         
 
 def main():
+    #show window
     crop_simulation = QApplication(sys.argv)
     crop_window = MainWindow()
     crop_window.show()
